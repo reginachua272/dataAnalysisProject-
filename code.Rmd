@@ -2,3 +2,40 @@
 title: "code"
 output: html_notebook
 ---
+
+Scenario:
+
+Describe your data in terms of observation, data type and summary statistics.
+
+load data:
+
+```{r}
+
+```
+
+-   data size
+
+-   what are the variables(columns name??)
+
+-   show relationships(ggplot) any feature and popularity
+
+-   max and min year , range...
+
+-   most popular genre
+
+-   top 10 artist
+
+-   language bar graph
+
+-   top 10 popular tracks
+
+-   top 10 most danceable songs
+
+-   top 10 most energetic songs
+
+					
+				
+			
+		
+
+	
