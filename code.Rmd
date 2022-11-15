@@ -150,11 +150,6 @@ library(stringr)
 tidy_data <- data %>%
   filter(language == "en") %>%
   group_by(track_id) %>%
-  mutate(
-    songNumber = row_number(),
-    no = cumsum(str_detect(lyrics, 
-                                regex("^chapter [\\divxlc]", 
-                                      ignore_case = TRUE)))) %>%
   ungroup() %>%
   unnest_tokens(word, lyrics)
 
@@ -165,15 +160,25 @@ tokens_sentiment
 
 avg_sentiments <- tokens_sentiment %>% group_by(track_id) %>% summarise(n = mean(value))%>%arrange(desc(n))
 
+avg_sentiments
+
 avg_sentiment <-  inner_join(avg_sentiments,data,by="track_id")
 
 avg_sentiment
 
-ggplot(data = avg_sentiment) + 
-  geom_smooth(mapping = aes(x = track_popularity, y = n))+
-  geom_point(mapping = aes(x = track_popularity, y = n))
 
 ```
 
-```{}
+```{r}
+
+avg_sentiment %>% group_by(n) %>% summarise(sum = n())
+avg_sentiment
+
+
+ggplot(data = avg_sentiment ) + 
+  geom_smooth(mapping = aes(x = track_popularity, y = n))+
+  geom_point(mapping = aes(x = track_popularity, y = n, size = n))
+
+
+
 ```
