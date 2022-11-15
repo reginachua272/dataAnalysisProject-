@@ -34,30 +34,102 @@ nrow(data)
 summary(data)
 ```
 
--   show relationships(ggplot) any feature and popularity
-
 -   max and min year , range...
+
+-   most common genre
+
+```{r}
+length(unique(data$playlist_genre))
+
+genre <- data %>% group_by(playlist_genre) %>% summarise(n = n())%>%arrange(desc(n))
+                                                                            
+genre 
+
+subgenre <-  data %>% group_by(playlist_subgenre) %>% summarise(n = n())%>%arrange(desc(n))
+
+subgenre
+                                                                            
+
+#ggplot(genre, aes(playlist_genre, n)) +                                    
+#  geom_bar(stat = "identity")
+
+ggplot(genre,aes(x = reorder(playlist_genre, n), y = n)) +                                    
+  geom_bar(stat = "identity")
+
+
+ggplot(subgenre,aes(x = reorder(playlist_subgenre, n), y = n)) +                                     geom_bar(stat = "identity")
+
+```
 
 -   most popular genre
 
 ```{r}
-length(unique(data$playlist_genre))
-genre <- data %>% group_by(playlist_genre) %>% summary(n = n()) 
-genre
+popular_genre <- data %>% group_by(playlist_genre) %>% summarise(n = mean(track_popularity))%>%arrange(desc(n))
 
-ggplot(data = data) + 
-  geom_bar(mapping = aes(x = playlist_genre))
+popular_genre
 
+ggplot(popular_genre,aes(x = reorder(playlist_genre, n), y = n)) +                            
+  geom_bar(stat = "identity")
+
+popular_subgenre <- data %>% group_by(playlist_subgenre) %>% summarise(n = mean(track_popularity))%>%arrange(desc(n))
+
+popular_subgenre
+
+ggplot(popular_subgenre,aes(x = reorder(playlist_subgenre, n), y = n)) +                             geom_bar(stat = "identity")
+                                                                            
 ```
 
 -   top 10 artist
 
+```{r}
+top_artists=data%>%group_by(track_artist)%>%summarise(n=n())%>%arrange(desc(n))%>%top_n(10)
+top_artists
+```
+
 -   language bar graph
+
+```{r}
+ggplot(data = data) + 
+  geom_bar(mapping = aes(x = language))
+```
 
 -   top 10 popular tracks
 
+```{r}
+top_tracks=data%>%arrange(desc(track_popularity))%>%top_n(10)
+top_tracks
+```
+
 -   top 10 most danceable songs
+
+```{r}
+top_danceable_songs=data%>%arrange(desc(danceability))%>%top_n(10)
+top_danceable_songs
+```
 
 -   top 10 most energetic songs
 
-nrc package R for sentimental analysis
+```{r}
+top_energetic_songs=data%>%arrange(desc(energy))%>%top_n(10)
+top_energetic_songs
+```
+
+-   show relationships(ggplot) any feature and popularity
+
+```{r}
+ggplot(data = data) + 
+  geom_smooth(mapping = aes(x = energy, y = danceability))+
+  geom_point(mapping = aes(x = energy, y = danceability))
+```
+
+```{r}
+ggplot(data = data) + 
+  geom_smooth(mapping = aes(x = danceability, y = track_popularity))+
+  geom_point(mapping = aes(x = danceability, y = track_popularity))
+```
+
+nrc package R for sentimental analysis:
+
+Hypothesis:
+
+Songs with positive sentiments are more popular.
