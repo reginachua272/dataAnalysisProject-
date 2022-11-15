@@ -10,18 +10,45 @@ Describe your data in terms of observation, data type and summary statistics.
 load data:
 
 ```{r}
+library(readr)
+library(tidyverse)
+library(ggplot2)
+```
 
+```{r}
+data <- read.csv("/Users/reginachua/Documents/R/dataAnalysisProject-/spotify_songs.csv")
+View(data)
+head(data)
 ```
 
 -   data size
 
+```{r}
+dim(data)
+nrow(data)
+```
+
 -   what are the variables(columns name??)
+
+```{r}
+summary(data)
+```
 
 -   show relationships(ggplot) any feature and popularity
 
 -   max and min year , range...
 
 -   most popular genre
+
+```{r}
+length(unique(data$playlist_genre))
+genre <- data %>% group_by(playlist_genre) %>% summary(n = n()) 
+genre
+
+ggplot(data = data) + 
+  geom_bar(mapping = aes(x = playlist_genre))
+
+```
 
 -   top 10 artist
 
@@ -33,9 +60,4 @@ load data:
 
 -   top 10 most energetic songs
 
-					
-				
-			
-		
-
-	
+nrc package R for sentimental analysis
