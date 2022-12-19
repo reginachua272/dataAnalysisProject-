@@ -3,182 +3,280 @@ title: "code"
 output: html_notebook
 ---
 
-Scenario:
+# Spotify analysis on songs' audio features, sentiments and popularity
 
-Describe your data in terms of observation, data type and summary statistics.
+### Pei Wen Regina Chua, Can Berk Alakır
 
-load data:
+#### Introduction and Scenario
+
+In this project, an analysis on various songs on Spotify will be done. The analysis will be done on the lyrics and audio features. This analysis will consist of a sentiment analysis and the relation of the sentimental analysis to the popularity. Also, the relation of popularity with the audio features will be analyzed. This analysis will be helpful for record companies who want to come up with new songs that would have a higher probability of becoming popular. Some properties available in the dataset are artists, their songs, albums, the release dates of the albums, and audio features such as danceability or energy.
+
+#### Data Description and Visualizations
+
+-   First, the libraries required for the analysis are loaded:
 
 ```{r}
 library(readr)
 library(tidyverse)
 library(ggplot2)
 library(tidytext)
+library(dplyr)
+library(stringr)
+library(lubridate)
 ```
+
+-   The data set is loaded and shown:
 
 ```{r}
-data <- read.csv("/Users/reginachua/Documents/R/dataAnalysisProject-/spotify_songs.csv")
-View(data)
-head(data)
+data <- read.csv("spotify_songs.csv")
 ```
 
--   data size
+-   Number of rows and columns are shown:
 
 ```{r}
 dim(data)
-nrow(data)
 ```
 
--   what are the variables(columns name??)
+-   A summary analysis for the data set which shows various information about the columns is done below:
 
 ```{r}
 summary(data)
 ```
 
--   max and min year , range...
-
--   most common genre
+-   The most common genre and the subgenre in the data set are determined below:
 
 ```{r}
+# The number of genres in total was determined
 length(unique(data$playlist_genre))
-
+# Total number of songs per genre is determined
 genre <- data %>% group_by(playlist_genre) %>% summarise(n = n())%>%arrange(desc(n))
-                                                                            
-genre 
-
-subgenre <-  data %>% group_by(playlist_subgenre) %>% summarise(n = n())%>%arrange(desc(n))
-
+genre
+# Total number of songs per subgenre is determined
+subgenre <- data %>% group_by(playlist_subgenre) %>% summarise(n = n())%>%arrange(desc(n))
 subgenre
-                                                                            
-
-#ggplot(genre, aes(playlist_genre, n)) +                                    
-#  geom_bar(stat = "identity")
-
-ggplot(genre,aes(x = reorder(playlist_genre, n), y = n)) +                                    
-  geom_bar(stat = "identity")
-
-
-ggplot(subgenre,aes(x = reorder(playlist_subgenre, n), y = n)) +                                     geom_bar(stat = "identity")
-
+# Histograms were done for both the genre and the subgenre 
+ggplot(genre,aes(x = reorder(playlist_genre, n), y = n)) +geom_bar(stat = "identity")
+ggplot(subgenre,aes(x = reorder(playlist_subgenre, n), y = n)) + geom_bar(stat = "identity")
 ```
 
--   most popular genre
+-   The most popular genre and subgenre are determined below:
 
 ```{r}
+# Popularity average for each genre is determined
 popular_genre <- data %>% group_by(playlist_genre) %>% summarise(n = mean(track_popularity))%>%arrange(desc(n))
-
 popular_genre
 
+# A histogram is plotted based on this data
 ggplot(popular_genre,aes(x = reorder(playlist_genre, n), y = n)) +                            
   geom_bar(stat = "identity")
 
+# Popularity average for each subgenre is determined
 popular_subgenre <- data %>% group_by(playlist_subgenre) %>% summarise(n = mean(track_popularity))%>%arrange(desc(n))
-
 popular_subgenre
 
+# A histogram is plotted based on this data
 ggplot(popular_subgenre,aes(x = reorder(playlist_subgenre, n), y = n)) +                             geom_bar(stat = "identity")
-                                                                            
 ```
 
--   top 10 artist
+-   Top 10 artists based on the number of songs they have in the data set are determined below. It looks like it gives an error on one of the computers that we worked on but the code actually works.
 
 ```{r}
 top_artists=data%>%group_by(track_artist)%>%summarise(n=n())%>%arrange(desc(n))%>%top_n(10)
 top_artists
 ```
 
--   language bar graph
+-   Top 10 artists based on the average popularity of their songs are determined below:
+
+```{r}
+average_popularity = data %>%
+  group_by(track_artist) %>%
+  summarize(average_popularity = mean(track_popularity)) %>%
+  arrange(desc(average_popularity)) %>%
+  slice(1:10)
+
+average_popularity
+```
+
+-   Top languages in the data set based on the number of songs in that language is plotted below. The most popular 2 languages were determined to be English and Spanish.
 
 ```{r}
 ggplot(data = data) + 
   geom_bar(mapping = aes(x = language))
 ```
 
--   top 10 popular tracks
+-   Top 10 all-time most popular tracks are determined below:
 
 ```{r}
-top_tracks=data%>%arrange(desc(track_popularity))%>%top_n(10)
-top_tracks
+top_tracks = data %>% 
+  arrange(desc(track_popularity)) %>%
+  slice(0:10) 
+
+top_tracks[,c("track_name", "track_popularity")]
 ```
 
--   top 10 most danceable songs
+-   All-time top 10 most danceable songs are determined below:
 
 ```{r}
-top_danceable_songs=data%>%arrange(desc(danceability))%>%top_n(10)
-top_danceable_songs
+top_danceable_songs=data%>%arrange(desc(danceability))%>%slice(0:10)
+top_danceable_songs[,c("track_name", "danceability")]
 ```
 
--   top 10 most energetic songs
+-   All-time top 10 most energetic songs were determined below:
 
 ```{r}
-top_energetic_songs=data%>%arrange(desc(energy))%>%top_n(10)
-top_energetic_songs
+top_energetic_songs=data%>%arrange(desc(energy))%>%slice(0:10)
+top_energetic_songs[,c("track_name", "energy")]
 ```
 
--   show relationships(ggplot) any feature and popularity
+-   Some relationship possibilities were tested below with ggplot and correlation test. First, danceability and energy were tested against each other to see if there is a positive correlation. It was observed that there is no such relation.
 
 ```{r}
 ggplot(data = data) + 
   geom_smooth(mapping = aes(x = energy, y = danceability))+
   geom_point(mapping = aes(x = energy, y = danceability))
+
+cor.test(data$danceability,data$energy)
 ```
+
+-   Below, the danceability and track popularity are tested against each other to see if there is a positive relationship. Again, it was observed that there is no such relation.
 
 ```{r}
 ggplot(data = data) + 
   geom_smooth(mapping = aes(x = danceability, y = track_popularity))+
   geom_point(mapping = aes(x = danceability, y = track_popularity))
+
+cor.test(data$danceability,data$track_popularity)
 ```
 
-nrc package R for sentimental analysis:
+#### Hypothesis description and Testing
 
-Hypothesis:
+A sentiment analysis was done over the lyrics of the songs in this data set to see if positive songs are more popular. To determine the sentiment value, "afinn" package was used to get the sentiment value for ewach word. The usage of "afinn" package made the results subjective since the sentiment values were determined by a person based on their beliefs, however the results should be helpful with interpretation.
 
-Songs with positive sentiments are more popular.
+*Hypothesis: Songs with positive sentiments are more popular.*
 
-Test:
+-   First, the analysis was done over the Engliish songs since most of the songs are in English for this data set. As the first step, the average sentiment values for each song was determined:
 
 ```{r}
 sentiments <- get_sentiments("afinn")
-#get_sentiments("nrc")
 ```
 
 ```{r}
-library(janeaustenr)
-library(dplyr)
-library(stringr)
-
+# Tokenization to get the words
 tidy_data <- data %>%
   filter(language == "en") %>%
   group_by(track_id) %>%
   ungroup() %>%
   unnest_tokens(word, lyrics)
 
-tidy_data
+# Merging the sentiment values to the table
 tokens_sentiment = inner_join(tidy_data,sentiments,by="word")
 
-tokens_sentiment
+# Getting the sentiment for songs (averaging)
+avg_sentiments <- tokens_sentiment %>% 
+  group_by(track_id) %>% 
+  summarise(average_sentiment = mean(value)) %>%
+  arrange(desc(average_sentiment))
 
-avg_sentiments <- tokens_sentiment %>% group_by(track_id) %>% summarise(n = mean(value))%>%arrange(desc(n))
-
-avg_sentiments
-
+# Track ID is merged to the sentiment table
 avg_sentiment <-  inner_join(avg_sentiments,data,by="track_id")
-
 avg_sentiment
-
-
 ```
+
+-   Below, the average sentiment values are plotted against the track popularity. A correlation test was done. No relation was observed.
 
 ```{r}
-
-avg_sentiment %>% group_by(n) %>% summarise(sum = n())
-avg_sentiment
-
+avg_sentiment <- avg_sentiment %>% group_by(average_sentiment) 
 
 ggplot(data = avg_sentiment ) + 
-  geom_smooth(mapping = aes(x = track_popularity, y = n))+
-  geom_point(mapping = aes(x = track_popularity, y = n, size = n))
+  geom_smooth(mapping = aes(x = track_popularity, y = average_sentiment))+
+  geom_point(mapping = aes(x = track_popularity, y = average_sentiment))
 
-
-
+cor.test(avg_sentiment$track_popularity,avg_sentiment$average_sentiment)
 ```
+
+-   The same analysis was done for the Spanish language, which is the second most popular language of the songs in this data set. For this, a translated version of Afinn from English to Spanish was used. Again, no relation was found.
+
+```{r}
+# Since Afinn is in English, a translated version is used:
+download.file("https://raw.githubusercontent.com/jboscomendoza/rpubs/master/sentimientos_afinn/lexico_afinn.en.es.csv", "lexico_afinn.en.es.csv")
+afinn <- read.csv("lexico_afinn.en.es.csv", stringsAsFactors = F, fileEncoding = "latin1") %>% 
+  tbl_df()
+
+# The code below is the same as the English songs' analysis however the language filter is set to "es"
+tidy_data2 <- data %>%
+  filter(language == "es") %>%
+  group_by(track_id) %>%
+  ungroup() %>%
+  unnest_tokens(Palabra, lyrics)
+
+tokens_sentiment2 = inner_join(tidy_data2,afinn,by="Palabra")
+
+avg_sentiments2 <- tokens_sentiment2 %>% 
+  group_by(track_id) %>% 
+  summarise(average_sentiment = mean(Puntuacion)) %>%
+  arrange(desc(average_sentiment))
+
+avg_sentiment2 <-  inner_join(avg_sentiments2,data,by="track_id")
+
+ggplot(data = avg_sentiment2 ) + 
+  geom_smooth(mapping = aes(x = track_popularity, y = average_sentiment))+
+  geom_point(mapping = aes(x = track_popularity, y = average_sentiment))
+
+cor.test(avg_sentiment2$track_popularity,avg_sentiment2$average_sentiment)
+```
+
+-   Another analysis is done between the year and popularity. Our thought was: "*Popularity increases as the release date is closer to today*". It was observed that there is a general decrease in popularity from the year 1957 to 2005.
+
+```{r}
+dataForDates = data
+
+# Dates are reformatted
+dataForDates$track_album_release_date <- as.Date(dataForDates$track_album_release_date, format ="%Y-%m-%d")
+
+result <- dataForDates %>% group_by(year = lubridate::floor_date(track_album_release_date, 'year')) %>% summarize(popularity = mean(track_popularity))
+
+# Plot for popularity per year
+ggplot(data = result ) + 
+  geom_smooth(mapping = aes(x = year, y = popularity))+
+  geom_point(mapping = aes(x = year, y = popularity))
+```
+
+-   One more analysis is done between the year and sentiment. Our thought was: "*The sentiment would improve over the years*". No correlation was observed.
+
+```{r}
+# Reformatting the date
+data2 = avg_sentiment
+data2$track_album_release_date <- as.Date(data2$track_album_release_date, format ="%Y-%m-%d")
+result2 <- data2 %>% group_by(year = lubridate::floor_date(track_album_release_date, 'year')) %>% summarize(sen = mean(average_sentiment))
+
+# Plot
+ggplot(data = result2 ) + 
+  geom_smooth(mapping = aes(x = year, y = sen))+
+  geom_point(mapping = aes(x = year, y = sen))
+```
+
+-   Below, the most common words per year were determined. Our thought was that *the most common words would be words like "I, you, oh, the, a, an"*. It can be observed that the most common words are mostly these words so our hypothesis is correct.
+
+```{r}
+# Reformatting the date
+tidy_data$track_album_release_date <- as.Date(tidy_data$track_album_release_date, format ="%Y-%m-%d") 
+
+# Word counting per year
+wordAnalysis <- tidy_data %>%
+  group_by(year = lubridate::floor_date(track_album_release_date, 'year')) %>%
+  count(word)
+
+# Top word is extracted
+wordAnalysisResult <- wordAnalysis %>%
+  top_n(1, n)
+
+wordAnalysisResult
+```
+
+#### Comment
+
+In this project, data analysis was done over a data set of songs, artists, release dates, and features. Our first and most important hypothesis was *Songs with positive sentiments are more popular*. No such relation was observed. Since the hypothesis is disproved, the record companies who want to come up with new songs should not go for positive sentiments thinking that the song would be popular.
+
+Some other side thoughts than our hypothesis were also analysed since we were highly interested in extracting more information from the data set. Some of them were proven and some of them were wrong. The most significant of them was our thought on sentimental improvement over the years which was proven to be wrong.
+
+As an additional comment, if the common stop words such as "there, and, you, me, I, the, a, oh" were removed from the data frame, we would get a better analysis result since these words affect the average sentiment analysis result.
